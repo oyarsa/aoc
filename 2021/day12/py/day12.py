@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
+from typing import Optional
 
 
 class Graph:
@@ -34,25 +35,33 @@ def recur_walk(graph: Graph, node: str, seen: set[str]) -> int:
     if node.islower():
         seen.add(node)
 
-    return sum(recur_walk(graph, node, seen.copy()) for node in graph.adj(node))
-
-
-def recur_walk2(graph: Graph, node: str, seen: set[str], double: bool) -> int:
+    count = sum(recur_walk(graph, node, seen.copy()) for node in graph.adj(node))
     if node in seen:
-        if double:
+        seen.remove(node)
+    return count
+
+
+def recur_walk2(
+    graph: Graph, node: str, seen: set[str], visited_twice: Optional[str]
+) -> int:
+    if node in seen:
+        if visited_twice is not None:
             return 0
         else:
-            double = True
+            visited_twice = node
     if node == "end":
         return 1
     if node.islower():
         seen.add(node)
 
-    return sum(
-        recur_walk2(graph, node, seen.copy(), double)
+    count = sum(
+        recur_walk2(graph, node, seen, visited_twice)
         for node in graph.adj(node)
         if node != "start"
     )
+    if node in seen and node != visited_twice:
+        seen.remove(node)
+    return count
 
 
 def part1(problem: Graph) -> int:
@@ -60,7 +69,7 @@ def part1(problem: Graph) -> int:
 
 
 def part2(problem: Graph) -> int:
-    return recur_walk2(problem, "start", set(), False)
+    return recur_walk2(problem, "start", set(), None)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     io::{stdin, BufRead},
+    time::Instant,
 };
 
 struct Graph {
@@ -31,7 +32,7 @@ impl Graph {
     }
 }
 
-fn recur_walk<'a>(graph: &Graph, node: &'a str, mut seen: HashSet<&'a str>) -> usize {
+fn recur_walk<'a>(graph: &'a Graph, node: &'a str, seen: &mut HashSet<&'a str>) -> usize {
     if seen.contains(&node) {
         return 0;
     }
@@ -42,23 +43,27 @@ fn recur_walk<'a>(graph: &Graph, node: &'a str, mut seen: HashSet<&'a str>) -> u
         seen.insert(node);
     }
 
-    graph
+    let count = graph
         .adj(node)
-        .map(|node| recur_walk(graph, node, seen.clone()))
-        .sum()
+        .map(|node| recur_walk(graph, node, seen))
+        .sum();
+    if seen.contains(node) {
+        seen.remove(&node);
+    }
+    count
 }
 
 fn recur_walk2<'a>(
-    graph: &Graph,
+    graph: &'a Graph,
     node: &'a str,
-    mut seen: HashSet<&'a str>,
-    mut double: bool,
+    seen: &mut HashSet<&'a str>,
+    mut seen_twice: Option<&'a str>,
 ) -> usize {
     if seen.contains(&node) {
-        if double {
+        if seen_twice.is_some() {
             return 0;
         } else {
-            double = true;
+            seen_twice = Some(node);
         }
     }
     if node == "end" {
@@ -68,19 +73,23 @@ fn recur_walk2<'a>(
         seen.insert(node);
     }
 
-    graph
+    let count = graph
         .adj(node)
         .filter(|&node| node != "start")
-        .map(|node| recur_walk2(graph, node, seen.clone(), double))
-        .sum()
+        .map(|node| recur_walk2(graph, node, seen, seen_twice))
+        .sum();
+    if seen.contains(node) && (seen_twice.is_none() || seen_twice.unwrap() != node) {
+        seen.remove(node);
+    }
+    count
 }
 
 fn part1(graph: &Graph) -> usize {
-    recur_walk(graph, "start", HashSet::new())
+    recur_walk(graph, "start", &mut HashSet::new())
 }
 
 fn part2(graph: &Graph) -> usize {
-    recur_walk2(graph, "start", HashSet::new(), false)
+    recur_walk2(graph, "start", &mut HashSet::new(), None)
 }
 
 fn main() {
@@ -89,6 +98,8 @@ fn main() {
         let (src, dst) = line.split_once('-').unwrap();
         graph.add(src, dst);
     }
+    let start = Instant::now();
     println!("Part 1: {}", part1(&graph));
     println!("Part 2: {}", part2(&graph));
+    println!("{:?}", start.elapsed());
 }
