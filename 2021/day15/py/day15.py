@@ -1,5 +1,5 @@
-import heapq
 import sys
+from heapq import heappop, heappush
 from itertools import product
 from typing import Dict, List, Tuple
 
@@ -7,12 +7,9 @@ Pair = Tuple[int, int]
 Graph = Dict[Pair, int]
 
 
-def neighbours(v: Pair, n: int, m: int) -> List[Pair]:
-    y, x = v
-    ds = [(1, 0), (0, 1), (-1, 0), (0, -1)]
-    return [
-        (yy, xx) for dx, dy in ds if 0 <= (yy := y + dy) < n and 0 <= (xx := x + dx) < m
-    ]
+def neighbours(v: Pair) -> List[Pair]:
+    directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+    return [(v[0] + dy, v[1] + dx) for dx, dy in directions]
 
 
 def get_n_m(graph: Graph) -> Pair:
@@ -21,23 +18,26 @@ def get_n_m(graph: Graph) -> Pair:
     return n, m
 
 
-def djikstra(graph):
-    n, m = get_n_m(graph)
-    dist: Dict[Pair, int] = {(0, 0): 0}
+def djikstra(graph: Graph, start: Pair, end: Pair) -> Dict[Pair, int]:
+    dist: Dict[Pair, int] = {start: 0}
     pq: List[Tuple[int, Pair]] = []
 
     for v in graph.keys():
-        if v != (0, 0):
+        if v != start:
             dist[v] = int(1e9)
-        heapq.heappush(pq, (dist[v], v))
+        heappush(pq, (dist[v], v))
 
     while pq:
-        _, u = heapq.heappop(pq)
-        for v in neighbours(u, n, m):
+        _, u = heappop(pq)
+        if u == end:
+            return dist
+        for v in neighbours(u):
+            if v not in graph:
+                continue
             alt = dist[u] + graph[v]
             if alt < dist[v]:
                 dist[v] = alt
-                heapq.heappush(pq, (alt, v))
+                heappush(pq, (alt, v))
     return dist
 
 
@@ -52,21 +52,17 @@ def read_problem() -> Graph:
 def replicate_map(graph: Graph) -> Graph:
     graph = graph.copy()
     n, m = get_n_m(graph)
-    for a, b, i, j in product(range(5), range(5), range(n), range(m)):
-        new = a + b + graph[i, j]
-        if new > 9:
-            new -= 9
-        ii = n * (a) + i
-        jj = m * (b) + j
-        graph[ii, jj] = new
+    for ix, jx, i, j in product(range(5), range(5), range(n), range(m)):
+        graph[ix * n + i, jx * m + j] = (ix + jx + graph[i, j] - 1) % 9 + 1
 
     return graph
 
 
 def solve(problem: Graph) -> int:
-    dist = djikstra(problem)
     n, m = get_n_m(problem)
-    return dist[n - 1, m - 1]
+    start, end = (0, 0), (n - 1, m - 1)
+    dist = djikstra(problem, start, (n - 1, m - 1))
+    return dist[end]
 
 
 if __name__ == "__main__":

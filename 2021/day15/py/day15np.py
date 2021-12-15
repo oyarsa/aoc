@@ -1,7 +1,8 @@
-import heapq
 import sys
+from heapq import heappop, heappush
 from itertools import product
 from typing import Dict, List, Tuple, cast
+
 import numpy as np
 
 Pair = Tuple[int, int]
@@ -16,7 +17,7 @@ def neighbours(v: Pair, n: int, m: int) -> List[Pair]:
     ]
 
 
-def djikstra(graph):
+def djikstra(graph: Graph) -> Dict[Pair, int]:
     n, m = graph.shape
     dist: Dict[Pair, int] = {(0, 0): 0}
     pq: List[Tuple[int, Pair]] = []
@@ -25,15 +26,17 @@ def djikstra(graph):
         v = cast(Pair, v)
         if v != (0, 0):
             dist[v] = int(1e9)
-        heapq.heappush(pq, (dist[v], v))
+        heappush(pq, (dist[v], v))
 
     while pq:
-        _, u = heapq.heappop(pq)
+        _, u = heappop(pq)
+        if u == (n - 1, m - 1):
+            return dist
         for v in neighbours(u, n, m):
             alt = dist[u] + graph[v]
             if alt < dist[v]:
                 dist[v] = alt
-                heapq.heappush(pq, (alt, v))
+                heappush(pq, (alt, v))
     return dist
 
 
