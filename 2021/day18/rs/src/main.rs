@@ -4,6 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
+use regex::Regex;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Element {
@@ -94,16 +95,18 @@ impl Number {
 }
 
 fn parse_line(line: &str) -> Number {
+    let re = Regex::new(r"\[|\]|\d+").unwrap();
     let mut depth = 0;
     let mut numbers = vec![];
-    for c in line.chars() {
-        match c {
-            '[' => depth += 1,
-            ']' => depth -= 1,
-            // base 16 so I can run some tests with >10 without having to implement
-            // a proper parser for numbers longer than 1 digit
-            c if c.is_digit(16) => numbers.push(Element::new(c.to_digit(16).unwrap(), depth)),
-            _ => continue,
+    for c in re.find_iter(line) {
+        match c.as_str() {
+            "[" => depth += 1,
+            "]" => depth -= 1,
+            c => {
+                if let Ok(x) = c.parse::<u32>() {
+                    numbers.push(Element::new(x, depth))
+                }
+            }
         }
     }
     Number(numbers)
@@ -118,12 +121,12 @@ fn read_problem() -> Vec<Number> {
         .collect()
 }
 
-fn sum(numbers: Vec<Number>) -> Number {
-    numbers.into_iter().reduce(|a, b| &a + &b).unwrap()
-}
-
 fn part1(problem: Vec<Number>) -> u32 {
-    sum(problem).magnitude()
+    problem
+        .into_iter()
+        .reduce(|a, b| &a + &b)
+        .unwrap()
+        .magnitude()
 }
 
 fn part2(problem: Vec<Number>) -> u32 {
@@ -173,11 +176,11 @@ mod test {
     fn test_split() {
         let pairs = [
             (
-                "[[[[0,7],4],[F,[0,D]]],[1,1]]",
-                "[[[[0,7],4],[[7,8],[0,D]]],[1,1]]",
+                "[[[[0,7],4],[15,[0,13]]],[1,1]]",
+                "[[[[0,7],4],[[7,8],[0,13]]],[1,1]]",
             ),
             (
-                "[[[[0,7],4],[[7,8],[0,D]]],[1,1]]",
+                "[[[[0,7],4],[[7,8],[0,13]]],[1,1]]",
                 "[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]",
             ),
         ];
