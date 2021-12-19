@@ -1,0 +1,12 @@
+[package]
+name = "day19"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+itertools = "0.10.3"
+ndarray = "0.15.4"
+ndarray-linalg = { version = "0.14", features = ["openblas-static"] }
+once_cell = "1.9.0"
