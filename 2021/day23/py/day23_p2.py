@@ -212,6 +212,8 @@ def read_problem() -> State:
             pos = 19 + 2 * i + j
             positions[pos] = TYPES[x]
 
+    print(positions)
+
     return State(0, tuple(positions))
 
 
